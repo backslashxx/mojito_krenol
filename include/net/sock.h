@@ -2651,4 +2651,6 @@ int sockev_unregister_notify(struct notifier_block *nb);
 
 int sock_bindtoindex(struct sock *sk, int ifindex, bool lock_sk);
 
+void sock_def_readable(struct sock *sk);
+
 #endif	/* _SOCK_H */
