@@ -91,7 +91,8 @@
 				<26 512 0 4070000>, /* 8 bus=1017.6 (SVS L1)  */
 				<26 512 0 5414000>, /* 9 bus=1353.6 (NOM)     */
 				<26 512 0 6220000>, /* 10 bus=1555.2 (NOM)    */
-				<26 512 0 7219000>; /* 11 bus=1804.8 (TURBO)  */
+				<26 512 0 7219000>, /* 11 bus=1804.8 (TURBO)  */
+				<26 512 0 8532000>; /* 12 bus=2133 OVERCLOCK  */
 
 		/* GDSC regulator names */
 		regulator-names = "vddcx", "vdd";
@@ -175,9 +176,9 @@
 				qcom,gpu-pwrlevel@0 {
 					reg = <0>;
 					qcom,gpu-freq = <845000000>;
-					qcom,bus-freq = <11>;
+					qcom,bus-freq = <12>;
 					qcom,bus-min = <10>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM L1 */
@@ -186,7 +187,7 @@
 					qcom,gpu-freq = <745000000>;
 					qcom,bus-freq = <10>;
 					qcom,bus-min = <9>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM */
@@ -248,9 +249,9 @@
 				qcom,gpu-pwrlevel@0 {
 					reg = <0>;
 					qcom,gpu-freq = <845000000>;
-					qcom,bus-freq = <11>;
+					qcom,bus-freq = <12>;
 					qcom,bus-min = <10>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM L1 */
@@ -259,7 +260,7 @@
 					qcom,gpu-freq = <745000000>;
 					qcom,bus-freq = <10>;
 					qcom,bus-min = <9>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM */
@@ -321,17 +322,17 @@
 				qcom,gpu-pwrlevel@0 {
 					reg = <0>;
 					qcom,gpu-freq = <895000000>;
-					qcom,bus-freq = <11>;
+					qcom,bus-freq = <12>;
 					qcom,bus-min = <10>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 				/* TURBO */
 				qcom,gpu-pwrlevel@1 {
 					reg = <1>;
 					qcom,gpu-freq = <845000000>;
-					qcom,bus-freq = <11>;
+					qcom,bus-freq = <12>;
 					qcom,bus-min = <10>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM L1 */
@@ -340,7 +341,7 @@
 					qcom,gpu-freq = <745000000>;
 					qcom,bus-freq = <10>;
 					qcom,bus-min = <9>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM */
@@ -402,9 +403,9 @@
 				qcom,gpu-pwrlevel@0 {
 					reg = <0>;
 					qcom,gpu-freq = <745000000>;
-					qcom,bus-freq = <11>;
+					qcom,bus-freq = <12>;
 					qcom,bus-min = <10>;
-					qcom,bus-max = <11>;
+					qcom,bus-max = <12>;
 				};
 
 				/* NOM */
