@@ -8,7 +8,7 @@ PREFIX="/tmp/optane"
 #CLANG="greenforce"
 CLANG="clang"
 
-KSUVER="11789"
+KSUVER="11985"
 
 if [ ! -d "KernelSU" ]; then
   git clone https://github.com/backslashxx/KernelSU -b $KSUVER
@@ -46,7 +46,7 @@ make -j24 ARCH=arm64 SUBARCH=arm64 O=out \
     	INSTALL_MOD_STRIP=1 \
 	KBUILD_BUILD_USER="$(git rev-parse --short HEAD | cut -c1-7)" \
 	KBUILD_BUILD_HOST="$(git symbolic-ref --short HEAD)" \
-	KBUILD_BUILD_FEATURES="ksu:# $KSUVER / cpu: uv 🧊 / gpu: uv 🧊 / mem: 2133Mhz 🔥 / source: https://github.com/backslashxx/mojito_krenol //"
+	KBUILD_BUILD_FEATURES="ksu:# $KSUVER / ඞ 1.4.2 / cpu: uv 🧊 / gpu: uv 🧊 / mem: 2133Mhz 🔥 / source: https://github.com/backslashxx/mojito_krenol //"
 	
 	
 ccache -s
