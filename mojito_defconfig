@@ -6066,3 +6066,5 @@ CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y
 #########################################################
 CONFIG_LD_DEAD_CODE_DATA_ELIMINATION=y
 CONFIG_POLLY_CLANG=y
+#########################################################
+CONFIG_SIMPLE_GPU_ALGORITHM=y
