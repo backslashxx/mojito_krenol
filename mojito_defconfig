@@ -6073,6 +6073,8 @@ CONFIG_IRQ_SBALANCE=y
 CONFIG_SBALANCE_EXCLUDE_CPUS="5,6,7"
 CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK=n
 #########################################################
+CONFIG_BOEFFLA_WL_BLOCKER=y
+#########################################################
 # general debloating
 CONFIG_STACKTRACE=n
 CONFIG_SECURITY_SELINUX_AVC_STATS=n
