@@ -6069,6 +6069,10 @@ CONFIG_POLLY_CLANG=y
 #########################################################
 CONFIG_SIMPLE_GPU_ALGORITHM=y
 #########################################################
+CONFIG_IRQ_SBALANCE=y
+CONFIG_SBALANCE_EXCLUDE_CPUS="5,6,7"
+CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK=n
+#########################################################
 # general debloating
 CONFIG_STACKTRACE=n
 CONFIG_SECURITY_SELINUX_AVC_STATS=n
