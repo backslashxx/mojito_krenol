@@ -6075,6 +6075,11 @@ CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK=n
 #########################################################
 CONFIG_BOEFFLA_WL_BLOCKER=y
 #########################################################
+CONFIG_IOSCHED_ANXIETY=y
+CONFIG_DEFAULT_ANXIETY=y
+CONFIG_IOSCHED_BFQ=y
+CONFIG_BFQ_GROUP_IOSCHED=y
+#########################################################
 # general debloating
 CONFIG_STACKTRACE=n
 CONFIG_SECURITY_SELINUX_AVC_STATS=n
