@@ -1650,6 +1650,12 @@ int generic_update_time(struct inode *inode, struct timespec *time, int flags)
 {
 	int iflags = I_DIRTY_TIME;
 
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	if (unlikely(inode->i_state & 67108864)) {
+		return 0;
+	}
+#endif
+
 	if (flags & S_ATIME)
 		inode->i_atime = *time;
 	if (flags & S_VERSION)
@@ -1673,6 +1679,12 @@ EXPORT_SYMBOL(generic_update_time);
 static int update_time(struct inode *inode, struct timespec *time, int flags)
 {
 	int (*update_time)(struct inode *, struct timespec *, int);
+
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	if (unlikely(inode->i_state & 67108864)) {
+		return 0;
+	}
+#endif
 
 	update_time = inode->i_op->update_time ? inode->i_op->update_time :
 		generic_update_time;
