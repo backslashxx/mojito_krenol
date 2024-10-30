@@ -31,6 +31,10 @@
 #include "pnode.h"
 #include "internal.h"
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern bool is_ksu_domain(void);
+#endif
+
 /* Maximum number of mounts in a mount namespace */
 unsigned int sysctl_mount_max __read_mostly = 100000;
 
@@ -2373,6 +2377,9 @@ static int do_loopback(struct path *path, const char *old_name,
 	struct path old_path;
 	struct mount *mnt = NULL, *old, *parent;
 	struct mountpoint *mp;
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+  	struct inode *inode = NULL;
+#endif
 	int err;
 	if (!old_name || !*old_name)
 		return -EINVAL;
@@ -2396,6 +2403,21 @@ static int do_loopback(struct path *path, const char *old_name,
 	if (IS_MNT_UNBINDABLE(old))
 		goto out2;
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+  // Check if process belongs to ksu and the source mount path has to start with '/data/adb/' 
+  if (is_ksu_domain() && !strncmp(old_name, "/data/adb/", 10)) {
+    inode = d_inode(old_path.dentry);
+    if (!inode) {
+      goto orig_flow;
+    }
+    spin_lock(&inode->i_lock);
+    inode->i_state |= 33554432;
+    pr_info("susfs:[%u][%u][do_loopback] bind mounted path '%s' is added to sus mount automatically\n",
+            current_uid().val, current->pid, old_name);
+    spin_unlock(&inode->i_lock);
+  }
+orig_flow:
+#endif
 	if (!check_mnt(parent))
 		goto out2;
 
