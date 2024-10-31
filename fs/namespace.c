@@ -31,6 +31,13 @@
 #include "pnode.h"
 #include "internal.h"
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern bool is_ksu_domain(void);
+extern int susfs_auto_add_sus_bind_mount(const char *pathname, struct path *path_target);
+extern void susfs_auto_add_try_umount_for_bind_mount(struct path *path);
+#endif
+
+
 /* Maximum number of mounts in a mount namespace */
 unsigned int sysctl_mount_max __read_mostly = 100000;
 
@@ -2423,6 +2430,23 @@ static int do_loopback(struct path *path, const char *old_name,
 		umount_tree(mnt, UMOUNT_SYNC);
 		unlock_mount_hash();
 	}
+#if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT)
+	// Check if bind mounted path should be hidden and umounted automatically.
+	// And we target only process with ksu domain.
+	if (is_ksu_domain()) {
+#if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT)
+		if (susfs_auto_add_sus_bind_mount(old_name, &old_path)) {
+			goto orig_flow;
+		}
+#endif
+#if defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT)
+		susfs_auto_add_try_umount_for_bind_mount(path);
+	}
+#endif
+#if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT)
+orig_flow:
+#endif
+#endif // #if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT)
 out2:
 	unlock_mount(mp);
 out:

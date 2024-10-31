@@ -1,7 +1,6 @@
 #include <linux/version.h>
 #include <linux/cred.h>
 #include <linux/fs.h>
-#include <linux/path.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/printk.h>
@@ -13,16 +12,11 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 #include <linux/fdtable.h>
-#include <linux/mnt_namespace.h>
 #include <linux/statfs.h>
-#include "internal.h"
-#include "mount.h"
 #include <linux/susfs.h>
-#include "../KernelSU/kernel/core_hook.h"
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 #include <linux/sus_su.h>
 #endif
-
 
 spinlock_t susfs_spin_lock;
 
@@ -33,6 +27,10 @@ bool is_log_enable __read_mostly = true;
 #else
 #define SUSFS_LOGI(fmt, ...) 
 #define SUSFS_LOGE(fmt, ...) 
+#endif
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern void try_umount(const char *mnt, bool check_mnt, int flags);
 #endif
 
 /* sus_path */
@@ -196,6 +194,23 @@ int susfs_add_sus_mount(struct st_susfs_sus_mount* __user user_info) {
 	spin_unlock(&susfs_spin_lock);
 	return 0;
 }
+#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
+int susfs_auto_add_sus_bind_mount(const char *pathname, struct path *path_target) {
+	struct inode *inode;
+	// Only source mount path starting with '/data/adb/' will be hidden
+	if (strncmp(pathname, "/data/adb/", 10)) {
+		SUSFS_LOGE("skip setting SUS_MOUNT inode state for source bind mount path '%s'\n", pathname);
+		return 1;
+	}
+	inode = path_target->dentry->d_inode;
+	if (!inode) return 1;
+	spin_lock(&inode->i_lock);
+	inode->i_state |= INODE_STATE_SUS_MOUNT;
+	SUSFS_LOGI("set SUS_MOUNT inode state for source bind mount path '%s'\n", pathname);
+	spin_unlock(&inode->i_lock);
+	return 0;
+}
+#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 /* sus_kstat */
@@ -378,13 +393,59 @@ void susfs_try_umount(uid_t target_uid) {
 
 	list_for_each_entry_safe(cursor, temp, &LH_TRY_UMOUNT_PATH, list) {
 		SUSFS_LOGI("umounting '%s' for uid: %d\n", cursor->info.target_pathname, target_uid);
-		if (cursor->info.mnt_mode == 0) {
+		if (cursor->info.mnt_mode == TRY_UMOUNT_DEFAULT) {
 			try_umount(cursor->info.target_pathname, false, 0);
-		} else if (cursor->info.mnt_mode == 1) {
+		} else if (cursor->info.mnt_mode == TRY_UMOUNT_DETACH) {
 			try_umount(cursor->info.target_pathname, false, MNT_DETACH);
+		} else {
+			SUSFS_LOGE("failed umounting '%s' for uid: %d, mnt_mode '%d' not supported\n",
+							cursor->info.target_pathname, target_uid, cursor->info.mnt_mode);
 		}
 	}
 }
+
+#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
+	struct st_susfs_try_umount_list *cursor = NULL, *temp = NULL;
+	struct st_susfs_try_umount_list *new_list = NULL;
+	char *pathname = NULL, *dpath = NULL;
+
+	pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!pathname) {
+		SUSFS_LOGE("no enough memory\n");
+		return;
+	}
+
+	dpath = d_path(path, pathname, PAGE_SIZE);
+	if (!dpath) {
+		SUSFS_LOGE("dpath is NULL\n");
+		goto out_free_pathname;
+	}
+
+	list_for_each_entry_safe(cursor, temp, &LH_TRY_UMOUNT_PATH, list) {
+		if (unlikely(!strcmp(dpath, cursor->info.target_pathname))) {
+			SUSFS_LOGE("target_pathname: '%s' is already created in LH_TRY_UMOUNT_PATH\n", dpath);
+			goto out_free_pathname;
+		}
+	}
+	new_list = kmalloc(sizeof(struct st_susfs_try_umount_list), GFP_KERNEL);
+	if (!new_list) {
+		SUSFS_LOGE("no enough memory\n");
+		goto out_free_pathname;
+	}
+
+	strncpy(new_list->info.target_pathname, dpath, SUSFS_MAX_LEN_PATHNAME-1);
+	new_list->info.mnt_mode = TRY_UMOUNT_DETACH;
+
+	INIT_LIST_HEAD(&new_list->list);
+	spin_lock(&susfs_spin_lock);
+	list_add_tail(&new_list->list, &LH_TRY_UMOUNT_PATH);
+	spin_unlock(&susfs_spin_lock);
+	SUSFS_LOGI("target_pathname: '%s', mnt_mode: %d, is successfully added to LH_TRY_UMOUNT_PATH\n", new_list->info.target_pathname, new_list->info.mnt_mode);
+out_free_pathname:
+	kfree(pathname);
+}
+#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 #endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 
 /* spoof_uname */
