@@ -55,6 +55,10 @@ config ZRAM_MEMORY_TRACKING
 
 	  See Documentation/blockdev/zram.txt for more information.
 
+config ZRAM_DEFAULT_COMP_ALGORITHM
+	string "Default ZRAM algorithm"
+	default "lz4"
+
 config ZRAM_ENTROPY
 	bool "Use entropy optimization for zram"
 	depends on ZRAM
