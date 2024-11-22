@@ -3853,7 +3853,7 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
 			restore_nameidata();
 			filp_close(filp, NULL);
 			// no need to do `putname(pathname);` here as it will be done by calling process
-			set_nameidata(&nd, dfd, fake_pathname, NULL);
+			set_nameidata(&nd, dfd, fake_pathname);
 			filp = path_openat(&nd, op, flags | LOOKUP_RCU);
 			if (unlikely(filp == ERR_PTR(-ECHILD)))
 				filp = path_openat(&nd, op, flags);
