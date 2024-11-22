@@ -20,6 +20,7 @@
 #define CMD_SUSFS_ADD_TRY_UMOUNT 0x55580
 #define CMD_SUSFS_SET_UNAME 0x55590
 #define CMD_SUSFS_ENABLE_LOG 0x555a0
+#define CMD_SUSFS_ADD_OPEN_REDIRECT 0x555c0
 #define CMD_SUSFS_SUS_SU 0x60000
 
 #define SUSFS_MAX_LEN_PATHNAME 256 // 256 should address many paths already unless you are doing some strange experimental stuff, then set your own desired length
@@ -43,6 +44,7 @@
 #define INODE_STATE_SUS_PATH 16777216 // 1 << 24
 #define INODE_STATE_SUS_MOUNT 33554432 // 1 << 25
 #define INODE_STATE_SUS_KSTAT 67108864 // 1 << 26
+#define INODE_STATE_OPEN_REDIRECT 134217728 // 1 << 27
 
 #define TASK_STRUCT_KABI1_IS_ZYGOTE 1 // 1 << 0
 
@@ -131,6 +133,22 @@ struct st_susfs_uname {
 };
 #endif
 
+/* open_redirect */
+#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
+struct st_susfs_open_redirect {
+	unsigned long                    target_ino;
+	char                             target_pathname[SUSFS_MAX_LEN_PATHNAME];
+	char                             redirected_pathname[SUSFS_MAX_LEN_PATHNAME];
+};
+
+struct st_susfs_open_redirect_hlist {
+	unsigned long                    target_ino;
+	char                             target_pathname[SUSFS_MAX_LEN_PATHNAME];
+	char                             redirected_pathname[SUSFS_MAX_LEN_PATHNAME];
+	struct hlist_node                node;
+};
+#endif
+
 /* sus_su */
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 struct st_sus_su {
@@ -175,6 +193,11 @@ int susfs_spoof_uname(struct new_utsname* tmp);
 /* set_log */
 #ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
 void susfs_set_log(bool enabled);
+#endif
+/* open_redirect */
+#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
+int susfs_add_open_redirect(struct st_susfs_open_redirect* __user user_info);
+struct filename* susfs_get_redirected_path(unsigned long ino);
 #endif
 /* sus_su */
 #ifdef CONFIG_KSU_SUSFS_SUS_SU

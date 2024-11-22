@@ -104,6 +104,15 @@ config KSU_SUSFS_ENABLE_LOG
     help
       - Allow logging susfs log to kernel, uncheck it to completely disable all susfs log.
 
+config KSU_SUSFS_OPEN_REDIRECT
+    bool "Enable to redirect a path to be opened with another path (experimental)"
+    depends on KSU_SUSFS
+    default y
+    help
+      - Allow redirecting a target path to be opened with another path.
+      - Effective only on processes with uid < 2000.
+      - Process with open access to the target and redirected path can be likely detected.
+
 config KSU_SUSFS_SUS_SU
     bool "Enable SUS-SU in runtime temporarily (experimental)"
     depends on KSU_SUSFS && KPROBES
