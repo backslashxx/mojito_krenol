@@ -404,11 +404,18 @@ bypass_orig_flow:
         if (dentry) {
         	const char *path = (const char *)dentry->d_name.name; 
             	if (strstr(path, "lineage")) { 
-	  	start = vma->vm_start;
-		end = vma->vm_end;
-		show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
-            	name = "/dev/ashmem (deleted)";
-		goto done;
+		  	start = vma->vm_start;
+			end = vma->vm_end;
+			show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
+		    	name = "/dev/ashmem (deleted)";
+			goto done;
+            	 	}
+		if (strstr(path, "zero")) { 
+		  	start = vma->vm_start;
+			end = vma->vm_end;
+			show_vma_header_prefix_fake(m, start, end, flags, pgoff, dev, ino);
+		    	name = "/dev/ashmem (deleted)";
+			goto done;
             	 	}
             	}
 	}
@@ -422,7 +429,17 @@ bypass_orig_flow:
 			seq_print_vma_name_fake(m, vma);
 			goto done;
 		}
-	}	
+	}
+	
+	if (vma->vm_ops && vma->vm_ops->name) {
+		name = vma->vm_ops->name(vma);
+		start = vma->vm_start;
+		end = vma->vm_end;
+		show_vma_header_prefix_fake(m, start, end, flags, pgoff, dev, ino);
+		if (name)
+			goto done;
+	}
+		
 	start = vma->vm_start;
 	end = vma->vm_end;
 	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
@@ -435,12 +452,6 @@ bypass_orig_flow:
 		seq_pad(m, ' ');
 		seq_file_path(m, file, "\n");
 		goto done;
-	}
-
-	if (vma->vm_ops && vma->vm_ops->name) {
-		name = vma->vm_ops->name(vma);
-		if (name)
-			goto done;
 	}
 
 	name = arch_vma_name(vma);
