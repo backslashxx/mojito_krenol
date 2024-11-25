@@ -182,6 +182,13 @@ static void seq_print_vma_name(struct seq_file *m, struct vm_area_struct *vma)
 	seq_putc(m, ']');
 }
 
+static void seq_print_vma_name_fake(struct seq_file *m, struct vm_area_struct *vma)
+{
+
+	seq_puts(m, "[anon:.bss");
+	seq_putc(m, ']');
+}
+
 static void vma_stop(struct proc_maps_private *priv)
 {
 	struct mm_struct *mm = priv->mm;
@@ -349,6 +356,23 @@ static void show_vma_header_prefix(struct seq_file *m,
 		   MAJOR(dev), MINOR(dev), ino);
 }
 
+static void show_vma_header_prefix_fake(struct seq_file *m,
+				   unsigned long start, unsigned long end,
+				   vm_flags_t flags, unsigned long long pgoff,
+				   dev_t dev, unsigned long ino)
+{
+	seq_setwidth(m, 25 + sizeof(void *) * 6 - 1);
+	seq_printf(m, "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu ",
+		   start,
+		   end,
+		   flags & VM_READ ? 'r' : '-',
+		   flags & VM_WRITE ? 'w' : '-',
+		   flags & VM_EXEC ? '-' : '-',
+		   flags & VM_MAYSHARE ? 's' : 'p',
+		   pgoff,
+		   MAJOR(dev), MINOR(dev), ino);
+}
+
 static void
 show_map_vma(struct seq_file *m, struct vm_area_struct *vma, int is_pid)
 {
@@ -389,6 +413,16 @@ bypass_orig_flow:
             	}
 	}
 
+	if (!name) {
+		if (vma_get_anon_name(vma)) {
+			start = vma->vm_start;
+			end = vma->vm_end;
+			show_vma_header_prefix_fake(m, start, end, flags, pgoff, dev, ino);
+			seq_pad(m, ' ');
+			seq_print_vma_name_fake(m, vma);
+			goto done;
+		}
+	}	
 	start = vma->vm_start;
 	end = vma->vm_end;
 	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
@@ -427,10 +461,7 @@ bypass_orig_flow:
 			goto done;
 		}
 
-		if (vma_get_anon_name(vma)) {
-			seq_pad(m, ' ');
-			seq_print_vma_name(m, vma);
-		}
+
 	}
 
 done:
