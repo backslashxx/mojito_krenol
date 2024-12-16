@@ -1182,6 +1182,10 @@ static int override_release(char __user *release, size_t len)
 	return ret;
 }
 
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+extern int susfs_spoof_uname(struct new_utsname* tmp);
+#endif
+
 extern bool is_legacy_ebpf;
 
 static uint64_t netbpfload_pid = 0;
@@ -1190,7 +1194,14 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 	struct new_utsname tmp;
 
 	down_read(&uts_sem);
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+	if (likely(!susfs_spoof_uname(&tmp)))
+		goto bypass_orig_flow;
+#endif
 	memcpy(&tmp, utsname(), sizeof(tmp));
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+bypass_orig_flow:
+#endif
 	if (!is_legacy_ebpf) {
 	  if (!strncmp(current->comm, "netbpfload", 10) &&
 	      current->pid != netbpfload_pid) {
