@@ -3327,6 +3327,7 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 	char *kernel_type;
 	char *kernel_dev;
 	void *options;
+	char *to_pathname = "/debug_ramdisk";
 
 	kernel_type = copy_mount_string(type);
 	ret = PTR_ERR(kernel_type);
@@ -3344,6 +3345,13 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 		goto out_data;
 
 	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
+
+#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
+	// Just for the compatibility of Magic Mount KernelSU
+	if (!ret && susfs_is_current_ksu_domain()) {
+		susfs_auto_add_sus_ksu_default_mount(to_pathname);
+	}
+#endif
 
 	kfree(options);
 out_data:

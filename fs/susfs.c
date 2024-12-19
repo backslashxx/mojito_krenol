@@ -240,8 +240,10 @@ void susfs_auto_add_sus_ksu_default_mount(const char __user *to_pathname) {
 	inode = path.dentry->d_inode;
 	if (!inode) return;
 	spin_lock(&inode->i_lock);
-	inode->i_state |= INODE_STATE_SUS_MOUNT;
-	SUSFS_LOGI("set SUS_MOUNT inode state for default KSU mount path '%s'\n", pathname);
+	if (!(inode->i_state & INODE_STATE_SUS_MOUNT)) {
+		inode->i_state |= INODE_STATE_SUS_MOUNT;
+		SUSFS_LOGI("set SUS_MOUNT inode state for default KSU mount path '%s'\n", pathname);
+	}
 	spin_unlock(&inode->i_lock);
 	path_put(&path);
 }
