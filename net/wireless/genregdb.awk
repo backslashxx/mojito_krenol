@@ -94,12 +94,6 @@ function parse_reg_rule()
 			flags = flags "\n\t\t\tNL80211_RRF_NO_OFDM | "
 		} else if (flagarray[arg] == "NO-CCK") {
 			flags = flags "\n\t\t\tNL80211_RRF_NO_CCK | "
-		} else if (flagarray[arg] == "NO-INDOOR") {
-			flags = flags "\n\t\t\tNL80211_RRF_NO_INDOOR | "
-		} else if (flagarray[arg] == "NO-OUTDOOR") {
-			flags = flags "\n\t\t\tNL80211_RRF_NO_OUTDOOR | "
-		} else if (flagarray[arg] == "DFS") {
-			flags = flags "\n\t\t\tNL80211_RRF_DFS | "
 		} else if (flagarray[arg] == "PTP-ONLY") {
 			flags = flags "\n\t\t\tNL80211_RRF_PTP_ONLY | "
 		} else if (flagarray[arg] == "PTMP-ONLY") {
