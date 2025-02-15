@@ -1250,6 +1250,14 @@ static struct file_system_type ovl_fs_type = {
 };
 MODULE_ALIAS_FS("overlay");
 
+static struct file_system_type ovl_fs_type_fake = {
+	.owner		= THIS_MODULE,
+	.name		= "erofs",
+	.mount		= ovl_mount,
+	.kill_sb	= kill_anon_super,
+};
+MODULE_ALIAS_FS("erofs");
+
 static void ovl_inode_init_once(void *foo)
 {
 	struct ovl_inode *oi = foo;
@@ -1272,6 +1280,10 @@ static int __init ovl_init(void)
 	err = register_filesystem(&ovl_fs_type);
 	if (err)
 		kmem_cache_destroy(ovl_inode_cachep);
+	
+	err = register_filesystem(&ovl_fs_type_fake);
+	if (err)
+		kmem_cache_destroy(ovl_inode_cachep);
 
 	return err;
 }
@@ -1279,6 +1291,7 @@ static int __init ovl_init(void)
 static void __exit ovl_exit(void)
 {
 	unregister_filesystem(&ovl_fs_type);
+	unregister_filesystem(&ovl_fs_type_fake);
 
 	/*
 	 * Make sure all delayed rcu free inodes are flushed before we
