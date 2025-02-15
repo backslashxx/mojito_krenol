@@ -310,6 +310,12 @@ static int ovl_show_options(struct seq_file *m, struct dentry *dentry)
 	struct super_block *sb = dentry->d_sb;
 	struct ovl_fs *ufs = sb->s_fs_info;
 
+	// 
+	if (strcmp(sb->s_type->name, "erofs") == 0) {
+		seq_puts(m, ",user_xattr,acl,cache_strategy=readaround");
+		goto skip;
+	}
+
 	seq_show_option(m, "lowerdir", ufs->config.lowerdir);
 	if (ufs->config.upperdir) {
 		seq_show_option(m, "upperdir", ufs->config.upperdir);
@@ -326,6 +332,7 @@ static int ovl_show_options(struct seq_file *m, struct dentry *dentry)
 	if (ufs->config.override_creds != ovl_override_creds_def)
 		seq_show_option(m, "override_creds",
 				ufs->config.override_creds ? "on" : "off");
+skip:
 	return 0;
 }
 
@@ -1250,6 +1257,14 @@ static struct file_system_type ovl_fs_type = {
 };
 MODULE_ALIAS_FS("overlay");
 
+static struct file_system_type ovl_fs_type_fake = {
+	.owner		= THIS_MODULE,
+	.name		= "erofs",
+	.mount		= ovl_mount,
+	.kill_sb	= kill_anon_super,
+};
+MODULE_ALIAS_FS("erofs");
+
 static void ovl_inode_init_once(void *foo)
 {
 	struct ovl_inode *oi = foo;
@@ -1272,6 +1287,10 @@ static int __init ovl_init(void)
 	err = register_filesystem(&ovl_fs_type);
 	if (err)
 		kmem_cache_destroy(ovl_inode_cachep);
+	
+	err = register_filesystem(&ovl_fs_type_fake);
+	if (err)
+		kmem_cache_destroy(ovl_inode_cachep);
 
 	return err;
 }
@@ -1279,6 +1298,7 @@ static int __init ovl_init(void)
 static void __exit ovl_exit(void)
 {
 	unregister_filesystem(&ovl_fs_type);
+	unregister_filesystem(&ovl_fs_type_fake);
 
 	/*
 	 * Make sure all delayed rcu free inodes are flushed before we
