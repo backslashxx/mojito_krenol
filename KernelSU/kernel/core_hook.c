@@ -550,6 +550,10 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
 
 	// try umount /system/etc/hosts (hosts module)
 	try_umount("/system/etc/hosts", false, MNT_DETACH);
+	
+	// lsposed
+	try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
+	try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
 
 	return 0;
 }
