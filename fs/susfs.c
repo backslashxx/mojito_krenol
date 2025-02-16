@@ -19,7 +19,7 @@
 static spinlock_t susfs_spin_lock;
 
 extern bool susfs_is_current_ksu_domain(void);
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 extern void ksu_try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid);
 #endif
 
