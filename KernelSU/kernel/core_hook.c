@@ -904,6 +904,9 @@ void susfs_try_umount_all(uid_t uid) {
 	/* For both Legacy KSU and Magic Mount KSU */
 	ksu_try_umount("/debug_ramdisk", true, MNT_DETACH, uid);
 	ksu_try_umount("/system/etc/hosts", false, MNT_DETACH, uid);
+	// lsposed
+	ksu_try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH, uid);
+	ksu_try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH, uid);
 }
 #endif
 
@@ -1002,6 +1005,10 @@ out_ksu_try_umount:
 
 	// try umount /system/etc/hosts (hosts module)
 	ksu_try_umount("/system/etc/hosts", false, MNT_DETACH);
+	
+	// lsposed
+	ksu_try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
+	ksu_try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
 #endif
 	return 0;
 }
