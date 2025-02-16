@@ -34,6 +34,10 @@ static bool ksu_module_mounted = false;
 
 extern int handle_sepolicy(unsigned long arg3, void __user *arg4);
 
+static bool ksu_su_compat_enabled = true;
+extern void ksu_sucompat_init();
+extern void ksu_sucompat_exit();
+
 static inline bool is_allow_su()
 {
 	if (is_manager()) {
@@ -416,14 +420,33 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
 	}
 
 	if (arg2 == CMD_IS_SU_ENABLED) {
-		pr_err("%lu not implemented!\n", arg2);
-		return 1;
+		if (copy_to_user(arg3, &ksu_su_compat_enabled,
+				 sizeof(ksu_su_compat_enabled))) {
+			pr_err("copy su compat failed\n");
+			return 0;
+		}
+		if (copy_to_user(result, &reply_ok, sizeof(reply_ok))) {
+			pr_err("prctl reply error, cmd: %lu\n", arg2);
+		}
+		return 0;
 	}
 	if (arg2 == CMD_ENABLE_SU) {
-		pr_err("%lu not implemented!\n", arg2);
-		return 1;
+		bool enabled = (arg3 != 0);
+		if (enabled == ksu_su_compat_enabled) {
+			pr_info("cmd enable su but no need to change.\n");
+			return 0;
+		}
+		if (enabled) {
+			ksu_sucompat_init();
+		} else {
+			ksu_sucompat_exit();
+		}
+		ksu_su_compat_enabled = enabled;
+		if (copy_to_user(result, &reply_ok, sizeof(reply_ok))) {
+			pr_err("prctl reply error, cmd: %lu\n", arg2);
+		}
+		return 0;
 	}
-	
 	return 0;
 }
 
@@ -550,10 +573,6 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
 
 	// try umount /system/etc/hosts (hosts module)
 	try_umount("/system/etc/hosts", false, MNT_DETACH);
-	
-	// lsposed
-	try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
-	try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
 
 	return 0;
 }
