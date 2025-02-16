@@ -312,6 +312,7 @@ static int ovl_show_options(struct seq_file *m, struct dentry *dentry)
 
 	// 
 	if (strcmp(sb->s_type->name, "erofs") == 0) {
+		seq_puts(m, ",user_xattr,acl,cache_strategy=readaround");
 		goto skip;
 	}
 
