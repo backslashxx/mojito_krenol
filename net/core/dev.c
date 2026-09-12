@@ -3262,7 +3262,7 @@ sw_checksum:
 }
 EXPORT_SYMBOL(skb_csum_hwoffload_help);
 
-static struct sk_buff *validate_xmit_skb(struct sk_buff *skb, struct net_device *dev, bool *again)
+static struct sk_buff *validate_xmit_skb(struct sk_buff *skb, struct net_device *dev)
 {
 	netdev_features_t features;
 
@@ -3290,6 +3290,9 @@ static struct sk_buff *validate_xmit_skb(struct sk_buff *skb, struct net_device 
 		    __skb_linearize(skb))
 			goto out_kfree_skb;
 
+		if (validate_xmit_xfrm(skb, features))
+			goto out_kfree_skb;
+
 		/* If packet is not checksummed and device does not
 		 * support checksumming for this protocol, complete
 		 * checksumming here.
@@ -3306,8 +3309,6 @@ static struct sk_buff *validate_xmit_skb(struct sk_buff *skb, struct net_device 
 		}
 	}
 
-	skb = validate_xmit_xfrm(skb, features, again);
-
 	return skb;
 
 out_kfree_skb:
@@ -3317,7 +3318,7 @@ out_null:
 	return NULL;
 }
 
-struct sk_buff *validate_xmit_skb_list(struct sk_buff *skb, struct net_device *dev, bool *again)
+struct sk_buff *validate_xmit_skb_list(struct sk_buff *skb, struct net_device *dev)
 {
 	struct sk_buff *next, *head = NULL, *tail;
 
@@ -3328,7 +3329,7 @@ struct sk_buff *validate_xmit_skb_list(struct sk_buff *skb, struct net_device *d
 		/* in case skb wont be segmented, point to itself */
 		skb->prev = skb;
 
-		skb = validate_xmit_skb(skb, dev, again);
+		skb = validate_xmit_skb(skb, dev);
 		if (!skb)
 			continue;
 
@@ -3659,7 +3660,6 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
 	struct netdev_queue *txq;
 	struct Qdisc *q;
 	int rc = -ENOMEM;
-	bool again = false;
 
 	skb_reset_mac_header(skb);
 	skb_assert_len(skb);
@@ -3721,7 +3721,7 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
 			if (dev_xmit_recursion())
 				goto recursion_alert;
 
-			skb = validate_xmit_skb(skb, dev, &again);
+			skb = validate_xmit_skb(skb, dev);
 			if (!skb)
 				goto out;
 
@@ -3772,44 +3772,6 @@ int dev_queue_xmit_accel(struct sk_buff *skb, void *accel_priv)
 }
 EXPORT_SYMBOL(dev_queue_xmit_accel);
 
-int dev_direct_xmit(struct sk_buff *skb, u16 queue_id)
-{
-	struct net_device *dev = skb->dev;
-	struct sk_buff *orig_skb = skb;
-	struct netdev_queue *txq;
-	int ret = NETDEV_TX_BUSY;
-	bool again = false;
-
-	if (unlikely(!netif_running(dev) ||
-		     !netif_carrier_ok(dev)))
-		goto drop;
-
-	skb = validate_xmit_skb_list(skb, dev, &again);
-	if (skb != orig_skb)
-		goto drop;
-
-	skb_set_queue_mapping(skb, queue_id);
-	txq = skb_get_tx_queue(dev, skb);
-
-	local_bh_disable();
-
-	HARD_TX_LOCK(dev, txq, smp_processor_id());
-	if (!netif_xmit_frozen_or_drv_stopped(txq))
-		ret = netdev_start_xmit(skb, dev, txq, false);
-	HARD_TX_UNLOCK(dev, txq);
-
-	local_bh_enable();
-
-	if (!dev_xmit_complete(ret))
-		kfree_skb(skb);
-
-	return ret;
-drop:
-	atomic_long_inc(&dev->tx_dropped);
-	kfree_skb_list(skb);
-	return NET_XMIT_DROP;
-}
-EXPORT_SYMBOL(dev_direct_xmit);
 
 /*************************************************************************
  *			Receiver routines
@@ -4482,8 +4444,6 @@ static __latent_entropy void net_tx_action(struct softirq_action *h)
 			spin_unlock(root_lock);
 		}
 	}
-
-	xfrm_dev_backlog(sd);
 }
 
 #if IS_ENABLED(CONFIG_BRIDGE) && IS_ENABLED(CONFIG_ATM_LANE)
@@ -9672,9 +9632,6 @@ static int __init net_dev_init(void)
 
 		skb_queue_head_init(&sd->input_pkt_queue);
 		skb_queue_head_init(&sd->process_queue);
-#ifdef CONFIG_XFRM_OFFLOAD
-		skb_queue_head_init(&sd->xfrm_backlog);
-#endif
 		INIT_LIST_HEAD(&sd->poll_list);
 		sd->output_queue_tailp = &sd->output_queue;
 #ifdef CONFIG_RPS
